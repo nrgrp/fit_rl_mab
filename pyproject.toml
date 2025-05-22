@@ -1,0 +1,16 @@
+[project]
+name = "fit-rl-mab"
+version = "0.1.0"
+description = "On the Solution Methods for Fitting Reinforcement Learning Model to Behavior Data under Bandits"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cvxpy>=1.6.5",
+    "jax>=0.6.1",
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
+    "numpyro>=0.18.0",
+    "pymc>=5.22.0",
+    "scipy>=1.15.3",
+    "seaborn>=0.13.2",
+]
