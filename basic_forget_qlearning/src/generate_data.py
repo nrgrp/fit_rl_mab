@@ -11,7 +11,7 @@ def get_data(envr, repeats, num_steps, p_r, p_tr, min_beta, max_beta):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    envr = Bandit(p_r, p_tr)
+    bdt = Bandit(p_r, p_tr)
 
     alphas = []
     betas = []
@@ -25,10 +25,10 @@ def get_data(envr, repeats, num_steps, p_r, p_tr, min_beta, max_beta):
         alphas.append(alpha)
         betas.append(beta)
 
-        reward, action, value = envr.generate_data(alpha, beta, num_steps)
+        reward, action, value = bdt.generate_data(alpha, beta, num_steps)
         action_vec = []
         for a in action:
-            a_vec = np.zeros(envr.num_arms)
+            a_vec = np.zeros(bdt.num_arms)
             a_vec[a] = 1
             action_vec.append(a_vec)
 
