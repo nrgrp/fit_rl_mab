@@ -19,8 +19,8 @@ def get_data(envr, repeats, num_steps, p_r, p_tr, min_beta, max_beta):
     values = []  # (repeat, step, value)
     lls = []
     for rp in range(repeats):
-        alpha = np.random.uniform()
-        beta = np.random.uniform(min_beta, max_beta)
+        alpha = np.random.uniform(size=bdt.num_arms)
+        beta = np.random.uniform(min_beta, max_beta, size=bdt.num_arms)
         alphas.append(alpha)
         betas.append(beta)
 

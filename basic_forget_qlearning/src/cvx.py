@@ -10,6 +10,70 @@ import scipy as sp
 import pandas as pd
 
 
+def fit_relax(envr):
+    data_dir = f'../data/{envr}'
+    rewards = np.load(os.path.join(data_dir, 'rewards.npy'))
+    actions = np.load(os.path.join(data_dir, 'actions.npy'))
+
+    n = actions.shape[1]
+    m = actions.shape[-1]
+
+    log_df = pd.DataFrame()
+    output_dir = f'../outputs/{envr}'
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    htvalues = []
+    times = []
+    lls = []
+    for rews, acts in tqdm(zip(rewards, actions), total=len(rewards)):
+        ### step I ###
+        g = cp.Variable(n)
+        G = cp.vstack([g for _ in range(m)])
+
+        X = []
+        Y = []
+        for t in range(n):
+            U = np.zeros((n, m))
+            if t > 0:
+                U[:t] = rews[:t][::-1]
+            x = cp.sum(cp.multiply(G, U.T), axis=1)
+            X.append(x)
+            Y.append(acts[t])
+        Y = np.vstack(Y)
+        X = cp.vstack(X)
+        obj = cp.sum(cp.sum(cp.multiply(X, Y), axis=1) - cp.log_sum_exp(X, axis=1))
+        constraints = []
+        constraints.append(g >= 0)
+        constraints.append(cp.diff(g) <= 0)
+
+        prob = cp.Problem(cp.Maximize(obj), constraints)
+        assert prob.is_dcp()
+        prob.solve()
+        times.append(prob.solver_stats.solve_time)
+
+        ### evaluate ###
+        X = []
+        Y = []
+        G_hat = G.value
+        for t in range(n):
+            U = np.zeros((n, m))
+            if t > 0:
+                U[:t] = rews[:t][::-1]
+            x = np.sum(np.multiply(G_hat, U.T), axis=-1)
+            X.append(x)
+            Y.append(acts[t])
+        Y = np.vstack(Y)
+        X = np.vstack(X)
+        lls.append(np.sum(np.sum(np.multiply(X, Y), axis=-1) - sp.special.logsumexp(X, axis=1)))
+        htvalues.append(X)
+
+    np.save(os.path.join(output_dir, f'htvalues_cvx.npy'), htvalues)
+    log_df['time'] = times
+    log_df['ll'] = lls
+    log_df.to_csv(os.path.join(output_dir, f'log_cvx.csv'), index=False)
+
+
 def fit_cvx(envr, min_beta, max_beta, s2_repeats, s2_solver):
     solver_tag = ''.join(s2_solver.split('-')).lower()
 
@@ -116,6 +180,9 @@ def fit_cvx(envr, min_beta, max_beta, s2_repeats, s2_solver):
 
 
 if __name__ == '__main__':
+    fit_relax(envr='2arm', min_beta=0, max_beta=5)
+    fit_relax(envr='10arm', min_beta=5, max_beta=10)
+
     solvers = ['Nelder-Mead', 'L-BFGS-B', 'TNC', 'SLSQP', 'Powell', 'trust-constr', 'COBYLA', 'COBYQA']
     for solver in solvers:
         print(f'Solving using {solver}...')
