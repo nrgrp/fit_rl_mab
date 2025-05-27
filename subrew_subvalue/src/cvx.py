@@ -65,6 +65,8 @@ def fit_relax(envr):
         times.append(prob.solver_stats.solve_time)
 
         ### evaluate ###
+        X_r = []
+        X_a = []
         X = []
         Y = []
         G_r_hat = G_r.value
@@ -77,13 +79,17 @@ def fit_relax(envr):
                 U_a[:t] = acts[:t][::-1]
             x_r = np.sum(np.multiply(G_r_hat, U_r.T), axis=-1)
             x_a = np.sum(np.multiply(G_a_hat, U_a.T), axis=-1)
+            X_r.append(x_r)
+            X_a.append(x_a)
             X.append(x_r + x_a)
             Y.append(acts[t])
         Y = np.vstack(Y)
+        X_r = np.vstack(X_r)
+        X_a = np.vstack(X_a)
         X = np.vstack(X)
         lls.append(np.sum(np.sum(np.multiply(X, Y), axis=-1) - sp.special.logsumexp(X, axis=1)))
-        htvalue_rs.append(x_r)
-        htvalue_as.append(x_a)
+        htvalue_rs.append(X_r)
+        htvalue_as.append(X_a)
 
     np.save(os.path.join(output_dir, f'htvalue_rs_cvx.npy'), htvalue_rs)
     np.save(os.path.join(output_dir, f'htvalue_as_cvx.npy'), htvalue_as)
@@ -208,6 +214,8 @@ if __name__ == '__main__':
                 htbeta_as.append(htbeta_a)
 
                 ### evaluate ###
+                X_r = []
+                X_a = []
                 X = []
                 Y = []
                 G_r_hat = np.array([htalpha_r * (1 - htalpha_r) ** k * htbeta_r for k in range(n)]).T
@@ -221,13 +229,17 @@ if __name__ == '__main__':
                         U_a[:t] = acts[:t][::-1]
                     x_r = np.sum(np.multiply(G_r_hat, U_r.T), axis=-1)
                     x_a = np.sum(np.multiply(G_a_hat, U_a.T), axis=-1)
+                    X_r.append(x_r)
+                    X_a.append(x_a)
                     X.append(x_r + x_a)
                     Y.append(acts[t])
                 Y = np.vstack(Y)
+                X_r = np.vstack(X_r)
+                X_a = np.vstack(X_a)
                 X = np.vstack(X)
                 lls.append(np.sum(np.sum(np.multiply(X, Y), axis=-1) - sp.special.logsumexp(X, axis=1)))
-                htvalue_rs.append(x_r)
-                htvalue_as.append(x_a)
+                htvalue_rs.append(X_r)
+                htvalue_as.append(X_a)
 
             np.save(os.path.join(output_dir, f'htvalue_rs_cvx_{solver_tag}.npy'), htvalue_rs)
             np.save(os.path.join(output_dir, f'htvalue_as_cvx_{solver_tag}.npy'), htvalue_as)
